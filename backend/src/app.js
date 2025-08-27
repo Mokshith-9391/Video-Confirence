@@ -15,7 +15,7 @@ connectToSocket(server);
 app.set("port", (process.env.PORT || 8000));
 
 app.use(cors({
-    origin: "https://videoconferencefrontend-lhwwx.onrender.com",
+    origin: "https://videoconferencefrontend-ihwwx.onrender.com",
     methods: ["GET", "POST"]
 }));
 app.use(express.json({limit: "40kb"}));

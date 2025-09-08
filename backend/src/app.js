@@ -11,10 +11,18 @@ connectToSocket(server);
 
 app.set("port", (process.env.PORT || 8000));
 
+
+const allowedOrigins = [
+    'https://videoconfirencefrontend-ihwx.onrender.com', 
+    'http://localhost:3000'                               
+];
+
 app.use(cors({
-    origin: "https://videoconfirencefrontend-ihwx.onrender.com",
+    origin: allowedOrigins, 
     methods: ["GET", "POST"]
 }));
+
+
 app.use(express.json({limit: "40kb"}));
 app.use(express.urlencoded({extended: true, limit: "40kb"}));
 

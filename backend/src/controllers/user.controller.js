@@ -3,7 +3,6 @@ import { User } from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
-
 const login = async(req, res) => {
     const {username, password} = req.body;
     if (!username || !password) {

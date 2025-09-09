@@ -1,25 +1,22 @@
 import { Server } from 'socket.io';
 
-
-const allowedOrigins = [
-    'https://videoconfirencefrontend-ihwx.onrender.com',
-    'http://localhost:3000'                              
-];
-
-
 let connections = {};
 let messages = {};
 let timeOnline = {};
 
+
+const allowedOrigins = [
+    "https://videoconfirencefrontend-ihwx.onrender.com", 
+    "http://localhost:3000"                               
+];
+
 export const connectToSocket = (server) => {
-    
     const io = new Server(server, {
         cors: {
-            origin: allowedOrigins, 
+            origin: allowedOrigins,
             methods: ["GET", "POST"]
         }
     });
-
 
     io.on("connection", (socket) => {
 

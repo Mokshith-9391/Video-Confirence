@@ -9,8 +9,8 @@ const app = express();
 const server = createServer(app);
 
 const allowedOrigins = [
-    "https://videoconfirencefrontend-ihwx.onrender.com", 
-    "http://localhost:3000"                               
+    "https://videoconfirencefrontend-ihwx.onrender.com",
+    "http://localhost:3000"
 ];
 
 connectToSocket(server);
@@ -19,7 +19,7 @@ app.set("port", (process.env.PORT || 8000));
 
 app.use(cors({
     origin: allowedOrigins,
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST", "OPTIONS"] // <-- ADDED "OPTIONS" HERE
 }));
 
 app.use(express.json({ limit: "40kb" }));

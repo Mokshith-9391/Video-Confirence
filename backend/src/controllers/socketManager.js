@@ -4,22 +4,21 @@ let connections = {};
 let messages = {};
 let timeOnline = {};
 
-
 const allowedOrigins = [
-    "https://videoconfirencefrontend-ihwx.onrender.com", 
-    "http://localhost:3000"                               
+    "https://videoconfirencefrontend-ihwx.onrender.com",
+    "http://localhost:3000"
 ];
 
 export const connectToSocket = (server) => {
     const io = new Server(server, {
         cors: {
             origin: allowedOrigins,
-            methods: ["GET", "POST"]
+            methods: ["GET", "POST", "OPTIONS"] // <-- ADDED "OPTIONS" HERE
         }
     });
 
     io.on("connection", (socket) => {
-
+        // ... all other socket logic remains the same
         socket.on("join-call", (path) => {
             if (connections[path] === undefined) {
                 connections[path] = [];

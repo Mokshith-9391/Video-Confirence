@@ -17,7 +17,7 @@ const withAuth = (Component) => {
                 }
 
                 try {
-                    await axios.get('http://localhost:8000/api/v1/users/validate-token', {
+                    await axios.get('https://videoconfirence.onrender.com/api/v1/users/validate-token', {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }

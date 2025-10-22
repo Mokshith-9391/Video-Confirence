@@ -1,24 +1,22 @@
+
+
 import axios from "axios";
 import httpStatus from "http-status";
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import server from "../environment";
 
-
 export const AuthContext = createContext({});
 
 const client = axios.create({
-    baseURL: `${server}/api/v1/users`
-})
-
+    baseURL: "https://videoconfirence.onrender.com/api/v1/users"
+});
 
 export const AuthProvider = ({ children }) => {
 
     const authContext = useContext(AuthContext);
 
-
     const [userData, setUserData] = useState(authContext);
-
 
     const router = useNavigate();
 
@@ -28,8 +26,7 @@ export const AuthProvider = ({ children }) => {
                 name: name,
                 username: username,
                 password: password
-            })
-
+            });
 
             if (request.status === httpStatus.CREATED) {
                 return request.data.message;
@@ -37,7 +34,7 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             throw err;
         }
-    }
+    };
 
     const handleLogin = async (username, password) => {
         try {
@@ -48,12 +45,12 @@ export const AuthProvider = ({ children }) => {
 
             if (request.status === httpStatus.OK) {
                 localStorage.setItem("token", request.data.token);
-                router("/home")
+                router("/home");
             }
         } catch (err) {
             throw err;
         }
-    }
+    };
 
     const getHistoryOfUser = async () => {
         try {
@@ -62,58 +59,40 @@ export const AuthProvider = ({ children }) => {
                     token: localStorage.getItem("token")
                 }
             });
-            return request.data
-        } catch
-         (err) {
+            return request.data;
+        } catch (err) {
             throw err;
         }
-    }
-    
+    };
+
     const addToUserHistory = async (meetingCode) => {
-        const token = localStorage.getItem("token");
-        
-        if (!meetingCode || meetingCode.trim() === "") {
-             try {
+        try {
+            if (!meetingCode) {
                 let request = await client.post("/add_to_activity", {
-                    userId: localStorage.getItem("user_id")
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    token: localStorage.getItem("token"),
+                    meeting_code: null
                 });
-
-                return request.data.meetingCode; 
-
-            } catch (e) {
-                throw new Error("Failed to host meeting or generate code.");
+                return request;
             }
-        } 
-        
-        else {
-             try {
-                let request = await client.post("/add_to_activity", {
-                    meeting_code: meetingCode
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                return meetingCode; 
-            } catch (e) {
-                throw e;
-            }
+
+            let request = await client.post("/add_to_activity", {
+                token: localStorage.getItem("token"),
+                meeting_code: meetingCode
+            });
+            return request;
+        } catch (e) {
+            throw e;
         }
-    }
-
+    };
 
     const data = {
         userData, setUserData, addToUserHistory, getHistoryOfUser, handleRegister, handleLogin
-    }
+    };
 
     return (
         <AuthContext.Provider value={data}>
             {children}
         </AuthContext.Provider>
-    )
+    );
 
-}
+};

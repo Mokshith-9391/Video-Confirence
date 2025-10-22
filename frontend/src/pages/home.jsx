@@ -13,10 +13,19 @@ function HomeComponent() {
 
     let handleJoinVideoCall = async () => {
         try {
-            await addToUserHistory(meetingCode)
-            navigate(`/${meetingCode}`)
+            let finalCode = meetingCode;
+
+            if (!finalCode || finalCode.trim() === "") {
+                const generatedCode = await addToUserHistory(null);
+                finalCode = generatedCode;
+            } else {
+                await addToUserHistory(finalCode);
+            }
+
+            navigate(`/${finalCode}`)
+
         } catch (e) {
-            console.error("Failed to add to history:", e);
+            console.error("Failed to add to history or generate code:", e);
         }
     }
 
@@ -27,11 +36,9 @@ function HomeComponent() {
                     <h2>Apna Video Call</h2>
                 </div>
                 <div style={{ display: "flex", alignItems: "center" }}>
-                    <IconButton onClick={
-                        () => {
-                            navigate("/history")
-                        }
-                    }>
+                    <IconButton onClick={() => {
+                        navigate("/history")
+                    }}>
                         <RestoreIcon />
                     </IconButton>
                     <p>History</p>

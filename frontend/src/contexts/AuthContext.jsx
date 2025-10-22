@@ -46,9 +46,6 @@ export const AuthProvider = ({ children }) => {
                 password: password
             });
 
-            console.log(username, password)
-            console.log(request.data)
-
             if (request.status === httpStatus.OK) {
                 localStorage.setItem("token", request.data.token);
                 router("/home")
@@ -71,16 +68,40 @@ export const AuthProvider = ({ children }) => {
             throw err;
         }
     }
-
+    
     const addToUserHistory = async (meetingCode) => {
-        try {
-            let request = await client.post("/add_to_activity", {
-                token: localStorage.getItem("token"),
-                meeting_code: meetingCode
-            });
-            return request
-        } catch (e) {
-            throw e;
+        const token = localStorage.getItem("token");
+        
+        if (!meetingCode || meetingCode.trim() === "") {
+             try {
+                let request = await client.post("/add_to_activity", {
+                    userId: localStorage.getItem("user_id")
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                return request.data.meetingCode; 
+
+            } catch (e) {
+                throw new Error("Failed to host meeting or generate code.");
+            }
+        } 
+        
+        else {
+             try {
+                let request = await client.post("/add_to_activity", {
+                    meeting_code: meetingCode
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                return meetingCode; 
+            } catch (e) {
+                throw e;
+            }
         }
     }
 

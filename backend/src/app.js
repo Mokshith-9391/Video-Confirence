@@ -19,7 +19,7 @@ app.set("port", (process.env.PORT || 8000));
 
 app.use(cors({
     origin: allowedOrigins,
-    methods: ["GET", "POST", "OPTIONS"] // <-- ADDED "OPTIONS" HERE
+    methods: ["GET", "POST", "OPTIONS"] 
 }));
 
 app.use(express.json({ limit: "40kb" }));
@@ -28,7 +28,9 @@ app.use(express.urlencoded({ extended: true, limit: "40kb" }));
 app.use("/api/v1/users", userRoutes);
 
 const start = async () => {
-    const connectionDb = await mongoose.connect("mongodb+srv://Mokshith:Hitam%402026@cluster0.dheczpm.mongodb.net/");
+    // CRITICAL FIX: Using environment variable for secure connection
+    const connectionDb = await mongoose.connect(process.env.MONGO_URI); 
+    
     console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);
     server.listen(app.get("port"), () => {
         console.log("Listening on port 8000");

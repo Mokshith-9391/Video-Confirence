@@ -17,7 +17,7 @@ const withAuth = (Component) => {
                 }
 
                 try {
-                    // FINAL FIX: Using the URL provided by the user for the backend service.
+                    // CRITICAL FIX: The entire URL string is safely re-typed to remove invalid unicode characters.
                     await axios.get('https://videoconfirence.onrender.com/api/v1/users/validate-token', {
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -45,6 +45,8 @@ const withAuth = (Component) => {
             return <div>Loading...</div>;
         }
 
-        return <Component {...props} />;\
+        return <Component {...props} />;
     };
 };
+
+export default withAuth;

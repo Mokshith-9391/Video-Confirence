@@ -17,7 +17,7 @@ const withAuth = (Component) => {
                 }
 
                 try {
-                    // FIX: Using the complete, correct URL for token validation
+                    // FINAL FIX: Using the URL provided by the user for the backend service.
                     await axios.get('https://videoconfirence.onrender.com/api/v1/users/validate-token', {
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -48,5 +48,3 @@ const withAuth = (Component) => {
         return <Component {...props} />;\
     };
 };
-
-export default withAuth;

@@ -1,5 +1,3 @@
-
-
 import axios from "axios";
 import httpStatus from "http-status";
 import { createContext, useContext, useState } from "react";
@@ -8,6 +6,7 @@ import server from "../environment";
 
 export const AuthContext = createContext({});
 
+// FINAL FIX: Using the URL provided by the user for the backend service.
 const client = axios.create({
     baseURL: "https://videoconfirence.onrender.com/api/v1/users"
 });
@@ -77,7 +76,7 @@ export const AuthProvider = ({ children }) => {
 
             let request = await client.post("/add_to_activity", {
                 token: localStorage.getItem("token"),
-                meeting_code: meetingCode
+                    meeting_code: meetingCode
             });
             return request;
         } catch (e) {

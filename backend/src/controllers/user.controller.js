@@ -1,5 +1,6 @@
 import httpStatus from "http-status";
 import { User } from "../models/user.model.js";
+import { Meeting } from "../models/meeting.model.js"; 
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -73,4 +74,30 @@ const validateToken = async(req, res) => {
     }
 }
 
-export {login, registerUser, validateToken};
+const addToActivity = async(req, res) => {
+    const { userId } = req.body; 
+
+    try {
+        const uniqueCode = crypto.randomBytes(3).toString("hex").toUpperCase();
+        
+        const newMeeting = new Meeting({
+            user_id: userId || 'anonymous',
+            meetingCode: uniqueCode,
+        });
+        
+        await newMeeting.save();
+        
+        return res.status(httpStatus.CREATED).json({
+            message: "Meeting room created successfully.",
+            meetingCode: uniqueCode
+        });
+
+    } catch (e) {
+        console.error("Add to Activity Error:", e);
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+            message: `Failed to create meeting: ${e.message}`
+        });
+    }
+}
+
+export {login, registerUser, validateToken, addToActivity};

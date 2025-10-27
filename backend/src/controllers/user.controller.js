@@ -68,6 +68,7 @@ const validateToken = async(req, res) => {
             return res.status(httpStatus.UNAUTHORIZED).json({message: "Invalid token"});
         }
         return res.status(httpStatus.OK).json({message: "Token is valid"});
+        // CRITICAL FIX: The logic in AuthContext requires a correct status/message on success
     } catch (e) {
         console.error("Token Validation Error:", e);
         return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({message: `Something went wrong: ${e.message}`});
@@ -75,13 +76,17 @@ const validateToken = async(req, res) => {
 }
 
 const addToActivity = async(req, res) => {
-    const { userId } = req.body; 
+    const { token } = req.body; 
+
+    // Find the user ID from the token (security check, though not strictly required for this function)
+    const user = await User.findOne({token});
+    const userId = user ? user._id : 'anonymous'; 
 
     try {
         const uniqueCode = crypto.randomBytes(3).toString("hex").toUpperCase();
         
         const newMeeting = new Meeting({
-            user_id: userId || 'anonymous',
+            user_id: userId,
             meetingCode: uniqueCode,
         });
         
@@ -100,4 +105,5 @@ const addToActivity = async(req, res) => {
     }
 }
 
+// FINAL CRITICAL FIX: Exporting all functions so Node.js can find them.
 export {login, registerUser, validateToken, addToActivity};

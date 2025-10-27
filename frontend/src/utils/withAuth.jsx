@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+// CRITICAL FIX: Define the URL string outside of the function scope to ensure no extra characters slip in.
+const BACKEND_VALIDATE_URL = 'https://videoconfirence.onrender.com/api/v1/users/validate-token';
+
 const withAuth = (Component) => {
     return (props) => {
         const navigate = useNavigate();
@@ -17,8 +20,8 @@ const withAuth = (Component) => {
                 }
 
                 try {
-                    // FINAL FIX: Using a structure that is more likely to resolve in Render's DNS system.
-                    await axios.get('https://videoconfirence-backend-mokshith.onrender.com/api/v1/users/validate-token', {
+                    // Use the clean, externalized URL variable
+                    await axios.get(BACKEND_VALIDATE_URL, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }

@@ -48,7 +48,7 @@ const withAuth = (Component) => {
             return <div>Loading...</div>;
         }
 
-        return <Component {...props} />;\
+        return <Component {...props} />;
     };
 };
 

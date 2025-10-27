@@ -103,5 +103,5 @@ const addToActivity = async(req, res) => {
     }
 }
 
-// FINAL FIX: This MUST be the correct export list:
+// FINAL FIX: This must include all functions required by the router.
 export {login, registerUser, validateToken, addToActivity};

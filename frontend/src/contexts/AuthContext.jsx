@@ -2,9 +2,12 @@ import axios from "axios";
 import httpStatus from "http-status";
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BACKEND_URL } from "../utils/constants"; // Ensure this file exists
+import server from "../environment";
 
 export const AuthContext = createContext({});
+
+// FIX: Define the URL directly here. No need for external file.
+const BACKEND_URL = "https://videoconfirence.onrender.com";
 
 const client = axios.create({
     baseURL: `${BACKEND_URL}/api/v1/users`
@@ -74,7 +77,6 @@ export const AuthProvider = ({ children }) => {
                     meeting_code: null 
                 });
                 
-                // CRITICAL FIX: Return the actual code string, not the whole object
                 return request.data.meetingCode; 
             }
 
@@ -84,7 +86,6 @@ export const AuthProvider = ({ children }) => {
                 meeting_code: meetingCode
             });
             
-            // Return the code passed by the user so we can navigate to it
             return meetingCode; 
 
         } catch (e) {

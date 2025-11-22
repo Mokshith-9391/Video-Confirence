@@ -2,13 +2,12 @@ import axios from "axios";
 import httpStatus from "http-status";
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import server from "../environment";
+import { BACKEND_URL } from "../utils/constants"; // Ensure this file exists
 
 export const AuthContext = createContext({});
 
-// FINAL FIX: Using the URL provided by the user for the backend service.
 const client = axios.create({
-    baseURL: "https://videoconfirence.onrender.com/api/v1/users"
+    baseURL: `${BACKEND_URL}/api/v1/users`
 });
 
 export const AuthProvider = ({ children }) => {
@@ -66,20 +65,30 @@ export const AuthProvider = ({ children }) => {
 
     const addToUserHistory = async (meetingCode) => {
         try {
-            if (!meetingCode) {
+            const token = localStorage.getItem("token");
+            
+            // CASE 1: HOSTING A NEW MEETING (No code provided)
+            if (!meetingCode || meetingCode.trim() === "") {
                 let request = await client.post("/add_to_activity", {
-                    token: localStorage.getItem("token"),
-                    meeting_code: null
+                    token: token,
+                    meeting_code: null 
                 });
-                return request;
+                
+                // CRITICAL FIX: Return the actual code string, not the whole object
+                return request.data.meetingCode; 
             }
 
-            let request = await client.post("/add_to_activity", {
-                token: localStorage.getItem("token"),
-                    meeting_code: meetingCode
+            // CASE 2: JOINING AN EXISTING MEETING
+            await client.post("/add_to_activity", {
+                token: token,
+                meeting_code: meetingCode
             });
-            return request;
+            
+            // Return the code passed by the user so we can navigate to it
+            return meetingCode; 
+
         } catch (e) {
+            console.error("Error adding to history:", e);
             throw e;
         }
     };

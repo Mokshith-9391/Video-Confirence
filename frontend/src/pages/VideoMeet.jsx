@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom';
 import io from "socket.io-client";
 import { Badge, IconButton, TextField } from '@mui/material';
 import { Button } from '@mui/material';
@@ -26,6 +27,14 @@ const peerConfigConnections = {
 }
 
 export default function VideoMeetComponent() {
+    const { url } = useParams();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (url === "index.html") {
+            navigate("/home");
+        }
+    }, [url, navigate]);
 
     var socketRef = useRef();
     let socketIdRef = useRef();
@@ -67,7 +76,8 @@ export default function VideoMeetComponent() {
     let [videos, setVideos] = useState([])
 
     const handleCopyLink = () => {
-        navigator.clipboard.writeText(window.location.href);
+        const inviteUrl = `${window.location.origin}/${url}`;
+        navigator.clipboard.writeText(inviteUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     }
@@ -487,7 +497,7 @@ export default function VideoMeetComponent() {
                 </div> :
                 <div className={styles.meetVideoContainer}>
                     <div className={styles.meetingInfoBar}>
-                        <span className={styles.meetingCodeText}>Room: {window.location.pathname.substring(1)}</span>
+                        <span className={styles.meetingCodeText}>Room: {url}</span>
                         <Button 
                             variant="contained" 
                             size="small" 

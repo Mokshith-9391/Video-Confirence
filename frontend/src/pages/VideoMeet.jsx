@@ -11,6 +11,7 @@ import MicOffIcon from '@mui/icons-material/MicOff'
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import StopScreenShareIcon from '@mui/icons-material/StopScreenShare'
 import ChatIcon from '@mui/icons-material/Chat'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import server from '../environment';
 
 const server_url = server;
@@ -53,6 +54,11 @@ export default function VideoMeetComponent() {
     let [askForUsername, setAskForUsername] = useState(true);
 
     let [username, setUsername] = useState("");
+
+    let [showAiPanel, setShowAiPanel] = useState(false);
+    let [activeAiTab, setActiveAiTab] = useState('transcript');
+    let [transcripts, setTranscripts] = useState([]);
+    let [actionItems, setActionItems] = useState([]);
 
     const videoRef = useRef([])
 
@@ -110,6 +116,7 @@ export default function VideoMeetComponent() {
                 tracks.forEach(track => track.stop())
             } catch (e) { }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [video, audio, videoAvailable, audioAvailable])
 
     useEffect(() => {
@@ -127,6 +134,7 @@ export default function VideoMeetComponent() {
                     .catch((e) => console.log(e))
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [screen])
 
     let getMedia = () => {
@@ -256,6 +264,18 @@ export default function VideoMeetComponent() {
 
             socketRef.current.on('chat-message', addMessage)
 
+            socketRef.current.on('transcription-chunk-received', (text, speaker) => {
+                setTranscripts((prev) => [...prev, { speaker, text, timestamp: new Date() }]);
+            });
+
+            socketRef.current.on('action-item-detected', (item) => {
+                setActionItems((prev) => {
+                    const exists = prev.some(i => i.task === item.task && i.assignee === item.assignee);
+                    if (exists) return prev;
+                    return [...prev, item];
+                });
+            });
+
             socketRef.current.on('user-left', (id) => {
                 setVideos((videos) => videos.filter((video) => video.socketId !== id))
             })
@@ -355,6 +375,57 @@ export default function VideoMeetComponent() {
         }
     }, [screen, getDislayMedia])
 
+    useEffect(() => {
+        if (!socketRef.current || !audio) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.warn("Speech recognition not supported in this browser.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event) => {
+            const last = event.results.length - 1;
+            const text = event.results[last][0].transcript.trim();
+            if (text) {
+                console.log("[SpeechRecognition] Emitting chunk:", text);
+                socketRef.current.emit("transcription-chunk", text, username || "Anonymous");
+            }
+        };
+
+        recognition.onerror = (event) => {
+            console.error("[SpeechRecognition] Error:", event.error);
+        };
+
+        recognition.onend = () => {
+            if (audio) {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error("[SpeechRecognition] Restart error:", e);
+                }
+            }
+        };
+
+        try {
+            recognition.start();
+        } catch (e) {
+            console.error("[SpeechRecognition] Start error:", e);
+        }
+
+        return () => {
+            recognition.onend = null;
+            try {
+                recognition.stop();
+            } catch (e) {}
+        };
+    }, [audio, username]);
+
     let handleScreen = () => {
         setScreen(!screen);
     }
@@ -419,6 +490,76 @@ export default function VideoMeetComponent() {
                             </div>
                         </div>
                     </div> : <></>}
+                    {showAiPanel ? (
+                        <div className={styles.aiPanel}>
+                            <div className={styles.aiHeader}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <AutoAwesomeIcon style={{ color: '#00e5ff' }} />
+                                    <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#f8fafc' }}>AI Assistant</h3>
+                                </div>
+                                <button className={styles.closeBtn} onClick={() => setShowAiPanel(false)}>×</button>
+                            </div>
+                            
+                            <div className={styles.aiTabs}>
+                                <button 
+                                    className={`${styles.aiTabButton} ${activeAiTab === 'transcript' ? styles.activeAiTab : ''}`}
+                                    onClick={() => setActiveAiTab('transcript')}
+                                >
+                                    Transcript
+                                </button>
+                                <button 
+                                    className={`${styles.aiTabButton} ${activeAiTab === 'actions' ? styles.activeAiTab : ''}`}
+                                    onClick={() => setActiveAiTab('actions')}
+                                >
+                                    Action Items ({actionItems.length})
+                                </button>
+                            </div>
+
+                            <div className={styles.aiContentContainer}>
+                                {activeAiTab === 'transcript' ? (
+                                    <div className={styles.aiTranscriptList}>
+                                        {transcripts.length > 0 ? (
+                                            transcripts.map((t, idx) => (
+                                                <div key={idx} className={styles.aiTranscriptItem}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                                        <span className={styles.aiTranscriptSpeaker}>{t.speaker}</span>
+                                                        <span className={styles.aiTranscriptTime}>
+                                                            {new Date(t.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <p className={styles.aiTranscriptText}>{t.text}</p>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className={styles.aiEmptyState}>
+                                                Waiting for transcriptions... Speak with your mic unmuted!
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className={styles.aiActionList}>
+                                        {actionItems.length > 0 ? (
+                                            actionItems.map((item, idx) => (
+                                                <div key={idx} className={styles.aiActionCard}>
+                                                    <div className={styles.aiActionAssignee}>
+                                                        {item.assignee}
+                                                    </div>
+                                                    <p className={styles.aiActionTask}>{item.task}</p>
+                                                    <div className={styles.aiActionContext}>
+                                                        Context: "{item.raw_text}"
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className={styles.aiEmptyState}>
+                                                No action items detected yet. Speak to define tasks like "John will fix the server by Friday".
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : null}
                     <div className={styles.buttonContainers}>
                         <IconButton onClick={handleVideo} style={{ color: "white" }}>
                             {(video === true) ? <VideocamIcon /> : <VideocamOffIcon />}
@@ -435,8 +576,12 @@ export default function VideoMeetComponent() {
                             </IconButton> : <></>}
                         <Badge badgeContent={newMessages} max={999} color='orange'>
                             <IconButton onClick={() => setModal(!showModal)} style={{ color: "white" }}>
-                                <ChatIcon />                        </IconButton>
+                                <ChatIcon />
+                            </IconButton>
                         </Badge>
+                        <IconButton onClick={() => setShowAiPanel(!showAiPanel)} style={{ color: showAiPanel ? "#00e5ff" : "white" }}>
+                            <AutoAwesomeIcon />
+                        </IconButton>
                     </div>
                     <video className={styles.meetUserVideo} ref={localVideoref} autoPlay muted></video>
                     <div className={styles.conferenceView}>

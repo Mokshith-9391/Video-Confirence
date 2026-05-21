@@ -1,4 +1,18 @@
 import { Server } from 'socket.io';
+import { meetingAgentManager } from "./meetingAgentManager.js";
+import { Meeting } from "../models/meeting.model.js";
+
+function extractMeetingCode(roomKey) {
+    try {
+        if (roomKey.startsWith("http://") || roomKey.startsWith("https://")) {
+            const url = new URL(roomKey);
+            return url.pathname.replace(/^\//, '').split('/')[0];
+        }
+        return roomKey.replace(/^\//, '').split('?')[0].split('/')[0];
+    } catch (e) {
+        return roomKey;
+    }
+}
 
 let connections = {};
 let messages = {};
@@ -25,6 +39,14 @@ export const connectToSocket = (server) => {
             }
             connections[path].push(socket.id);
             timeOnline[socket.id] = new Date();
+
+            meetingAgentManager.initRoomAgent(path, (roomId, actionItem) => {
+                if (connections[roomId]) {
+                    connections[roomId].forEach((id) => {
+                        io.to(id).emit("action-item-detected", actionItem);
+                    });
+                }
+            });
 
             for (let a = 0; a < connections[path].length; a++) {
                 io.to(connections[path][a]).emit("user-joined", socket.id, connections[path]);
@@ -63,6 +85,23 @@ export const connectToSocket = (server) => {
             }
         });
 
+        socket.on("transcription-chunk", (text, speaker) => {
+            const [matchingRoom, found] = Object.entries(connections)
+                .reduce(([room, isFound], [roomKey, roomValue]) => {
+                    if (!isFound && roomValue.includes(socket.id)) {
+                        return [roomKey, true];
+                    }
+                    return [room, isFound];
+                }, ['', false]);
+
+            if (found) {
+                meetingAgentManager.feedTranscription(matchingRoom, speaker, text);
+                connections[matchingRoom].forEach((id) => {
+                    io.to(id).emit("transcription-chunk-received", text, speaker);
+                });
+            }
+        });
+
         socket.on("disconnect", () => {
             delete timeOnline[socket.id];
             let roomKey;
@@ -85,7 +124,22 @@ export const connectToSocket = (server) => {
                 }
 
                 if (connections[roomKey].length === 0) {
+                    const roomKeyToClose = roomKey;
                     delete connections[roomKey];
+
+                    (async () => {
+                        try {
+                            const result = await meetingAgentManager.closeRoomAgent(roomKeyToClose);
+                            console.log(`[SocketManager] Summary and Action Items generated for room ${roomKeyToClose}`);
+                            const code = extractMeetingCode(roomKeyToClose);
+                            await Meeting.updateMany(
+                                { meetingCode: code },
+                                { $set: { summary: result.summary, actionItems: result.actionItems } }
+                            );
+                        } catch (err) {
+                            console.error("[SocketManager] Error closing agent or saving summary:", err);
+                        }
+                    })();
                 }
             }
         });

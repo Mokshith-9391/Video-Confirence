@@ -6,11 +6,8 @@ import server from "../environment";
 
 export const AuthContext = createContext({});
 
-// FIX: Define the URL directly here. No need for external file.
-const BACKEND_URL = "https://videoconfirence.onrender.com";
-
 const client = axios.create({
-    baseURL: `${BACKEND_URL}/api/v1/users`
+    baseURL: `${server}/api/v1/users`
 });
 
 export const AuthProvider = ({ children }) => {

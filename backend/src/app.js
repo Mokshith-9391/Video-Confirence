@@ -34,10 +34,19 @@ app.use(express.urlencoded({ extended: true, limit: "40kb" }));
 app.use("/api/v1/users", userRoutes);
 
 const start = async () => {
-    // CRITICAL FIX: Using environment variable for secure connection
-    const connectionDb = await mongoose.connect(process.env.MONGO_URI); 
+    try {
+        // CRITICAL FIX: Using environment variable for secure connection
+        const connectionDb = await mongoose.connect(process.env.MONGO_URI); 
+        console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);
+    } catch (error) {
+        console.error("====================================================");
+        console.error("MONGO CONNECTION ERROR DETECTED:");
+        console.error(error.message);
+        console.error("====================================================");
+        console.error("Server is proceeding to start without MongoDB connection.");
+        console.error("Please verify your MONGO_URI and ensure the cluster is resumed.");
+    }
     
-    console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);
     server.listen(app.get("port"), () => {
         console.log("Listening on port 8000");
     });

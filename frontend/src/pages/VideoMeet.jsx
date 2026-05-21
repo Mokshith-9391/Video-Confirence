@@ -12,6 +12,7 @@ import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import StopScreenShareIcon from '@mui/icons-material/StopScreenShare'
 import ChatIcon from '@mui/icons-material/Chat'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import server from '../environment';
 
 const server_url = server;
@@ -59,10 +60,17 @@ export default function VideoMeetComponent() {
     let [activeAiTab, setActiveAiTab] = useState('transcript');
     let [transcripts, setTranscripts] = useState([]);
     let [actionItems, setActionItems] = useState([]);
+    let [copied, setCopied] = useState(false);
 
     const videoRef = useRef([])
 
     let [videos, setVideos] = useState([])
+
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }
 
     const getPermissions = useCallback(async () => {
         try {
@@ -471,6 +479,18 @@ export default function VideoMeetComponent() {
                     </div>
                 </div> :
                 <div className={styles.meetVideoContainer}>
+                    <div className={styles.meetingInfoBar}>
+                        <span className={styles.meetingCodeText}>Room: {window.location.pathname.substring(1)}</span>
+                        <Button 
+                            variant="contained" 
+                            size="small" 
+                            onClick={handleCopyLink} 
+                            className={styles.copyInviteBtn}
+                            startIcon={<ContentCopyIcon style={{ fontSize: "1.1rem" }} />}
+                        >
+                            {copied ? "Link Copied!" : "Copy Invite Link"}
+                        </Button>
+                    </div>
                     {showModal ? <div className={styles.chatRoom}>
                         <div className={styles.chatContainer}>
                             <h1>Chat</h1>

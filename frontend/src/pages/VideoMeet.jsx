@@ -386,6 +386,13 @@ export default function VideoMeetComponent() {
     useEffect(() => {
         if (!socketRef.current || !audio) return;
 
+        // On mobile devices, Speech Recognition conflicts with WebRTC mic capture
+        const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+        if (isMobile) {
+            console.warn("Speech recognition disabled on mobile to prevent WebRTC mic conflict.");
+            return;
+        }
+
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             console.warn("Speech recognition not supported in this browser.");
